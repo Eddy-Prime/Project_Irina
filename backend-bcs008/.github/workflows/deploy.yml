@@ -1,0 +1,51 @@
+name: Deploy JAR app to Azure Web App - BCS08-backend
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [ Build and test JAR app - BCS08-backend ]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest   
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }} 
+
+    steps: 
+      - name: Set up Java version
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+
+      - name: Fetch latest .jar file
+        run: |
+          mkdir -p download
+          META=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://maven.pkg.github.com/UcllSoftwareEngineering2425/backend-bcs008/com/github/UcllSoftwareEngineering2425/courses-backend/0.0.1-SNAPSHOT/maven-metadata.xml")
+          echo "$META"
+          L_VERSION=$(echo "$META" | grep -oP '(?<=<value>).*?(?=</value>)' | tail -1)
+
+          URL_JAR="https://maven.pkg.github.com/UcllSoftwareEngineering2425/backend-bcs008/com/github/UcllSoftwareEngineering2425/courses-backend/0.0.1-SNAPSHOT/courses-backend-${L_VERSION}.jar"
+
+          curl -L -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "$URL_JAR" --output download/app.jar
+
+      - name: Verify downloaded JAR file
+        run: |
+          if [ ! -f "download/app.jar" ]; then
+            echo "JAR file not found!"
+            exit 1
+          fi
+          echo "JAR file downloaded successfully."
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'BCS08-backend'
+          slot-name: 'Production'
+          package: 'download/app.jar'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_5521A6D6D45C4BFCAB7682D4F2478573 }}

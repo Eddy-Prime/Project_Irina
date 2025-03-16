@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: courses
+  h2:
+    console:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        auto_quote_keyword: true
+    open-in-view: true
+  sql:
+    init:
+      mode: always
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          authority-prefix: ""
+
+cors:
+  allowed-origins:
+    - http://localhost:8080
+    - https://team08-frontend-e0bmcbbfc6bxeaav.westeurope-01.azurewebsites.net
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
